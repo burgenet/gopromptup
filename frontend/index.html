@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoPromptUp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <img class="site-logo" src="./src/gopromptuplogo.png" alt="GoPromptUp" />
+        <h1>Useful prompts only.</h1>
+        <p class="sub">No accounts. No tracking. Tokens rotate. Votes decay.</p>
+      </header>
+
+      <section class="controls card">
+        <label>
+          Model
+          <select id="modelSelect"></select>
+        </label>
+        <label>
+          Window
+          <select id="windowSelect">
+            <option value="today">Top today</option>
+            <option value="week">Top this week</option>
+            <option value="alltime" selected>All-time (decay)</option>
+          </select>
+        </label>
+        <label>
+          Sort
+          <select id="sortSelect">
+            <option value="top" selected>Top</option>
+            <option value="new">Newest</option>
+          </select>
+        </label>
+        <button id="refreshBtn">Refresh</button>
+      </section>
+
+      <section class="submit card">
+        <h2>Submit Prompt</h2>
+        <label id="submitModelWrap">
+          Model name
+          <input id="submitModelInput" maxlength="120" placeholder="e.g. Llama 4 Scout, Grok 3.5 Mini…" disabled />
+        </label>
+        <input id="titleInput" maxlength="140" placeholder="Optional title" />
+        <textarea id="bodyInput" maxlength="4000" placeholder="Paste your prompt"></textarea>
+        <button id="submitBtn">Submit</button>
+        <p class="hint">Token is stored in your browser only and used for accountless voting limits.</p>
+      </section>
+
+      <section>
+        <ul id="promptList" class="prompt-list"></ul>
+      </section>
+    </main>
+
+    <template id="promptTemplate">
+      <li class="prompt card">
+        <div class="row">
+          <div>
+            <h3 class="prompt-title"></h3>
+            <p class="meta"></p>
+          </div>
+          <div class="score-wrap">
+            <span class="score"></span>
+          </div>
+        </div>
+        <details>
+          <summary>Show prompt</summary>
+          <pre class="prompt-body"></pre>
+        </details>
+        <div class="actions">
+          <button class="vote-up">Up</button>
+          <button class="vote-down">Down</button>
+          <button class="copy">Copy</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="./src/app.js"></script>
+    <footer class="footer">
+      Powered by <a href="https://epheme.dev" target="_blank" rel="noopener noreferrer">Epheme</a>
+    </footer>
+  </body>
+</html>

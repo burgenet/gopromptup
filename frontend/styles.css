@@ -1,0 +1,189 @@
+:root {
+  --bg: #f8f5ef;
+  --surface: #fffdf9;
+  --ink: #161616;
+  --accent: #0b6e4f;
+  --accent-2: #c1121f;
+  --line: #e8dfd2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 10% 20%, #f5e9da 0%, transparent 38%),
+    radial-gradient(circle at 90% 10%, #dcefe8 0%, transparent 33%),
+    var(--bg);
+}
+
+.shell {
+  width: min(980px, 94vw);
+  margin: 2rem auto 4rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.site-logo {
+  height: 72px;
+  width: auto;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.masthead h1 {
+  font-size: clamp(2rem, 6vw, 4rem);
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.sub {
+  max-width: 60ch;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+  padding: 1rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.submit {
+  display: grid;
+  gap: 0.8rem;
+}
+
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem;
+  background: #fff;
+}
+
+input:disabled {
+  background: var(--bg);
+  color: #666;
+  cursor: default;
+}
+
+textarea {
+  min-height: 140px;
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+.hint,
+.meta {
+  color: #444;
+  font-size: 0.86rem;
+}
+
+.prompt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.prompt-title {
+  margin: 0;
+}
+
+.score-wrap {
+  text-align: right;
+  min-width: 90px;
+}
+
+.score {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+
+.prompt-body {
+  white-space: pre-wrap;
+  line-height: 1.4;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.vote-down {
+  background: var(--accent-2);
+}
+
+@media (max-width: 760px) {
+  .controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.footer {
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
+  border-top: 1px solid var(--line);
+}
+
+.footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
