@@ -1,0 +1,62 @@
+# gopromptup Redis — Deployment + Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gopromptup-redis
+  namespace: infra
+  labels:
+    app: gopromptup-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gopromptup-redis
+  template:
+    metadata:
+      labels:
+        app: gopromptup-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: gopromptup-redis-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gopromptup-redis-pvc
+  namespace: infra
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gopromptup-redis
+  namespace: infra
+spec:
+  selector:
+    app: gopromptup-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

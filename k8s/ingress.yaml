@@ -1,0 +1,50 @@
+# gopromptup ingress — gopromptup.com + www redirect
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gopromptup-ingress
+  namespace: infra
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Redirect www -> apex
+    traefik.ingress.kubernetes.io/router.middlewares: infra-gopromptup-www-redirect@kubernetescrd
+spec:
+  tls:
+    - hosts:
+        - gopromptup.com
+        - www.gopromptup.com
+      secretName: gopromptup-tls
+  rules:
+    - host: gopromptup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gopromptup-frontend
+                port:
+                  number: 80
+    - host: www.gopromptup.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gopromptup-frontend
+                port:
+                  number: 80
+---
+# Middleware: redirect www -> apex
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: gopromptup-www-redirect
+  namespace: infra
+spec:
+  redirectRegex:
+    regex: "^https://www\\.gopromptup\\.com(.*)"
+    replacement: "https://gopromptup.com${1}"
+    permanent: true

@@ -19,6 +19,8 @@ services:
     image: node:20-alpine
     working_dir: /app
     command: sh -c "npm install; npm run dev"
+    environment:
+      - API_PROXY_TARGET=http://gopromptup-backend:3010
     volumes:
       - ./frontend:/app
       - gopromptup_frontend_modules:/app/node_modules
@@ -27,9 +29,13 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: redis-server --appendonly yes
     ports:
       - '6381:6379'
+    volumes:
+      - gopromptup_redis_data:/data
 
 volumes:
   gopromptup_backend_modules:
   gopromptup_frontend_modules:
+  gopromptup_redis_data:

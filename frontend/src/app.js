@@ -1,130 +1,93 @@
-const API_BASE = 'http://localhost:3010/api';
+﻿'use strict';
+
+const API_BASE = '/api';
 const TOKEN_KEY = 'gopromptup_token_v1';
 
 const MODEL_CATALOG = [
-  { id: 'gpt-4.1', label: 'OpenAI GPT-4.1', group: 'OpenAI' },
-  { id: 'gpt-4o', label: 'OpenAI GPT-4o', group: 'OpenAI' },
-  { id: 'gpt-4o-mini', label: 'OpenAI GPT-4o Mini', group: 'OpenAI' },
-  { id: 'o3', label: 'OpenAI o3', group: 'OpenAI' },
-  { id: 'o4-mini', label: 'OpenAI o4-mini', group: 'OpenAI' },
-  { id: 'claude-3.7-sonnet', label: 'Anthropic Claude 3.7 Sonnet', group: 'Anthropic' },
-  { id: 'claude-3.5-sonnet', label: 'Anthropic Claude 3.5 Sonnet', group: 'Anthropic' },
-  { id: 'claude-3.5-haiku', label: 'Anthropic Claude 3.5 Haiku', group: 'Anthropic' },
-  { id: 'gemini-2.5-pro', label: 'Google Gemini 2.5 Pro', group: 'Google' },
-  { id: 'gemini-2.5-flash', label: 'Google Gemini 2.5 Flash', group: 'Google' },
-  { id: 'gemini-2.0-flash', label: 'Google Gemini 2.0 Flash', group: 'Google' },
-  { id: 'llama-3.3-70b', label: 'Meta Llama 3.3 70B', group: 'Meta' },
-  { id: 'llama-3.1-405b', label: 'Meta Llama 3.1 405B', group: 'Meta' },
-  { id: 'llama-3.1-70b', label: 'Meta Llama 3.1 70B', group: 'Meta' },
-  { id: 'grok-3', label: 'xAI Grok 3', group: 'xAI' },
-  { id: 'grok-3-mini', label: 'xAI Grok 3 Mini', group: 'xAI' },
+  { id: 'gpt-4.1', label: 'GPT-4.1', group: 'OpenAI' },
+  { id: 'gpt-4o', label: 'GPT-4o', group: 'OpenAI' },
+  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', group: 'OpenAI' },
+  { id: 'o3', label: 'o3', group: 'OpenAI' },
+  { id: 'o4-mini', label: 'o4-mini', group: 'OpenAI' },
+  { id: 'claude-3.7-sonnet', label: 'Claude 3.7 Sonnet', group: 'Anthropic' },
+  { id: 'claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', group: 'Anthropic' },
+  { id: 'claude-3.5-haiku', label: 'Claude 3.5 Haiku', group: 'Anthropic' },
+  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', group: 'Google' },
+  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', group: 'Google' },
+  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', group: 'Google' },
+  { id: 'llama-3.3-70b', label: 'Llama 3.3 70B', group: 'Meta' },
+  { id: 'llama-3.1-405b', label: 'Llama 3.1 405B', group: 'Meta' },
+  { id: 'llama-3.1-70b', label: 'Llama 3.1 70B', group: 'Meta' },
+  { id: 'grok-3', label: 'Grok 3', group: 'xAI' },
+  { id: 'grok-3-mini', label: 'Grok 3 Mini', group: 'xAI' },
   { id: 'mistral-large', label: 'Mistral Large', group: 'Mistral' },
   { id: 'mistral-medium', label: 'Mistral Medium', group: 'Mistral' },
-  { id: 'codestral', label: 'Mistral Codestral', group: 'Mistral' },
+  { id: 'codestral', label: 'Codestral', group: 'Mistral' },
   { id: 'deepseek-r1', label: 'DeepSeek R1', group: 'DeepSeek' },
   { id: 'deepseek-v3', label: 'DeepSeek V3', group: 'DeepSeek' },
-  { id: 'qwen2.5-max', label: 'Qwen 2.5 Max', group: 'Alibaba/Qwen' },
-  { id: 'qwen2.5-72b-instruct', label: 'Qwen 2.5 72B Instruct', group: 'Alibaba/Qwen' },
-  { id: 'command-r-plus', label: 'Cohere Command R+', group: 'Cohere' },
-  { id: 'command-r', label: 'Cohere Command R', group: 'Cohere' },
-  { id: 'phi-4', label: 'Microsoft Phi-4', group: 'Microsoft' },
-  { id: 'phi-3-medium', label: 'Microsoft Phi-3 Medium', group: 'Microsoft' },
+  { id: 'qwen2.5-max', label: 'Qwen 2.5 Max', group: 'Qwen' },
+  { id: 'qwen2.5-72b-instruct', label: 'Qwen 2.5 72B', group: 'Qwen' },
+  { id: 'command-r-plus', label: 'Command R+', group: 'Cohere' },
+  { id: 'command-r', label: 'Command R', group: 'Cohere' },
+  { id: 'phi-4', label: 'Phi-4', group: 'Microsoft' },
+  { id: 'phi-3-medium', label: 'Phi-3 Medium', group: 'Microsoft' },
+  { id: 'other', label: 'Other', group: 'Other' },
 ];
 
-const MODEL_LABEL_BY_ID = MODEL_CATALOG.reduce((acc, model) => {
-  acc[model.id] = model.label;
-  return acc;
-}, {});
+// Map for full labels (used on submit form etc.)
+const FULL_LABEL = {
+  'gpt-4.1': 'OpenAI GPT-4.1', 'gpt-4o': 'OpenAI GPT-4o', 'gpt-4o-mini': 'OpenAI GPT-4o Mini',
+  'o3': 'OpenAI o3', 'o4-mini': 'OpenAI o4-mini',
+  'claude-3.7-sonnet': 'Anthropic Claude 3.7 Sonnet', 'claude-3.5-sonnet': 'Anthropic Claude 3.5 Sonnet',
+  'claude-3.5-haiku': 'Anthropic Claude 3.5 Haiku',
+  'gemini-2.5-pro': 'Google Gemini 2.5 Pro', 'gemini-2.5-flash': 'Google Gemini 2.5 Flash',
+  'gemini-2.0-flash': 'Google Gemini 2.0 Flash',
+  'llama-3.3-70b': 'Meta Llama 3.3 70B', 'llama-3.1-405b': 'Meta Llama 3.1 405B',
+  'llama-3.1-70b': 'Meta Llama 3.1 70B',
+  'grok-3': 'xAI Grok 3', 'grok-3-mini': 'xAI Grok 3 Mini',
+  'mistral-large': 'Mistral Large', 'mistral-medium': 'Mistral Medium', 'codestral': 'Mistral Codestral',
+  'deepseek-r1': 'DeepSeek R1', 'deepseek-v3': 'DeepSeek V3',
+  'qwen2.5-max': 'Qwen 2.5 Max', 'qwen2.5-72b-instruct': 'Qwen 2.5 72B Instruct',
+  'command-r-plus': 'Cohere Command R+', 'command-r': 'Cohere Command R',
+  'phi-4': 'Microsoft Phi-4', 'phi-3-medium': 'Microsoft Phi-3 Medium',
+};
 
-const modelSelect = document.getElementById('modelSelect');
-const submitModelWrap = document.getElementById('submitModelWrap');
-const submitModelInput = document.getElementById('submitModelInput');
-const windowSelect = document.getElementById('windowSelect');
-const sortSelect = document.getElementById('sortSelect');
-const refreshBtn = document.getElementById('refreshBtn');
-const submitBtn = document.getElementById('submitBtn');
-const titleInput = document.getElementById('titleInput');
-const bodyInput = document.getElementById('bodyInput');
-const promptList = document.getElementById('promptList');
+const GROUPS = [...new Set(MODEL_CATALOG.map((m) => m.group))];
+const GROUP_DOT = {
+  OpenAI: '#10a37f', Anthropic: '#d97706', Google: '#4285f4', Meta: '#0064e0',
+  xAI: '#111111', Mistral: '#05c', DeepSeek: '#6366f1', Qwen: '#f59e0b',
+  Cohere: '#e11d48', Microsoft: '#00a4ef', Other: '#888888',
+};
+
+// â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const groupTabs    = document.getElementById('groupTabs');
+const modelShelf   = document.getElementById('modelShelf');
+const feedHeader   = document.getElementById('feedHeader');
+const feedTitle    = document.getElementById('feedTitle');
+const promptSection = document.getElementById('promptSection');
+const promptList   = document.getElementById('promptList');
 const promptTemplate = document.getElementById('promptTemplate');
+const windowSelect = document.getElementById('windowSelect');
+const sortSelect   = document.getElementById('sortSelect');
+const refreshBtn   = document.getElementById('refreshBtn');
+const submitBtn    = document.getElementById('submitBtn');
+const titleInput   = document.getElementById('titleInput');
+const bodyInput    = document.getElementById('bodyInput');
+const submitModelInput = document.getElementById('submitModelInput');
+const submitDetails = document.getElementById('submitDetails');
+const activityList        = document.getElementById('activityList');
+const activityNewPill     = document.getElementById('activityNewPill');
+const activityRefreshBtn  = document.getElementById('activityRefreshBtn');
 
-function populateModelSelect() {
-  const grouped = new Map();
-  for (const model of MODEL_CATALOG) {
-    if (!grouped.has(model.group)) grouped.set(model.group, []);
-    grouped.get(model.group).push(model);
-  }
+// â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let activeGroup = GROUPS[0];
+let activeModelId = null;
+let summary = {}; // { [modelId]: { count, topTitle, topScore } }
+let feedLastGeneratedAt = 0;  // timestamp of last activity feed load
+let feedPendingItems = [];     // items waiting behind the "N new" pill
+let feedPollTimer = null;
 
-  modelSelect.innerHTML = '';
-  for (const [group, models] of grouped.entries()) {
-    const optgroup = document.createElement('optgroup');
-    optgroup.label = group;
-    for (const model of models) {
-      const option = document.createElement('option');
-      option.value = model.id;
-      option.textContent = model.label;
-      optgroup.appendChild(option);
-    }
-    modelSelect.appendChild(optgroup);
-  }
-
-  const otherOption = document.createElement('option');
-  otherOption.value = 'other';
-  otherOption.textContent = 'Other';
-  modelSelect.appendChild(otherOption);
-
-  modelSelect.value = 'gpt-4o';
-}
-
-function selectedModelValue() {
-  // For browsing: Other → aggregate all custom-model prompts; no text input needed.
-  return modelSelect.value;
-}
-
-function normalizeCustomModelName(raw) {
-  return String(raw || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/-{2,}/g, '-');
-}
-
-function validateCustomModelName(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return { ok: false, message: 'Model name is required.' };
-  if (raw.length < 2 || raw.length > 120) return { ok: false, message: 'Use 2–120 characters.' };
-  if (!/[a-zA-Z]/.test(raw)) return { ok: false, message: 'Include at least one letter.' };
-  if (!/^[a-zA-Z0-9 .\-_/:()]+$/.test(raw)) {
-    return { ok: false, message: 'Letters, digits, spaces and . - _ / : ( ) only.' };
-  }
-  return { ok: true, message: '' };
-}
-
-function syncCustomModelValidation() {
-  if (modelSelect.value !== 'other') {
-    submitModelInput.setCustomValidity('');
-    return true;
-  }
-  const check = validateCustomModelName(submitModelInput.value);
-  submitModelInput.setCustomValidity(check.ok ? '' : check.message);
-  return check.ok;
-}
-
-function syncOtherModelVisibility() {
-  const isOther = modelSelect.value === 'other';
-  submitModelWrap.hidden = false;
-  submitModelInput.required = isOther;
-  if (isOther) {
-    submitModelInput.disabled = false;
-    submitModelInput.value = '';
-  } else {
-    const label = MODEL_LABEL_BY_ID[modelSelect.value] || modelSelect.value;
-    submitModelInput.value = label;
-    submitModelInput.disabled = true;
-  }
-  syncCustomModelValidation();
-}
-
+// â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function getToken() {
   const existing = localStorage.getItem(TOKEN_KEY);
   if (existing && existing.length > 16) return existing;
@@ -144,66 +107,255 @@ async function api(path, options = {}) {
     },
   });
   const payload = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(payload.error || `Request failed (${res.status})`);
-  }
+  if (!res.ok) throw new Error(payload.error || `Request failed (${res.status})`);
   return payload;
 }
 
-function modelLabel(model) {
-  const m = String(model || '').toLowerCase();
-  return MODEL_LABEL_BY_ID[m] || model;
+function modelLabel(modelId) {
+  return FULL_LABEL[modelId] || MODEL_CATALOG.find((m) => m.id === modelId)?.label || modelId;
 }
 
 function formatTime(ts) {
   return new Date(ts).toLocaleString();
 }
 
+function normalizeCustomModelName(raw) {
+  return String(raw || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '-');
+}
+
+// â”€â”€ Summary loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadSummary() {
+  try {
+    const data = await api('/models/summary');
+    summary = data.summary || {};
+  } catch {
+    summary = {};
+  }
+  renderGroupTabs();
+  renderModelShelf();
+}
+
+// ── Activity feed ────────────────────────────────────────────────────────────
+function groupForModel(modelId) {
+  return MODEL_CATALOG.find((m) => m.id === modelId)?.group || 'Other';
+}
+
+function renderActivityItems(items) {
+  activityList.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('li');
+    empty.className = 'card empty-state';
+    empty.textContent = 'No prompts yet. Be the first to submit one \u2193';
+    activityList.appendChild(empty);
+    return;
+  }
+  for (const item of items) {
+    const node = promptTemplate.content.cloneNode(true);
+    const li = node.querySelector('li');
+    if (li) {
+      li.dataset.promptId = item.id;
+      const group = groupForModel(item.model);
+      li.style.setProperty('--model-color', GROUP_DOT[group] || '#888');
+      li.classList.add('has-model-color');
+    }
+    node.querySelector('.prompt-title').textContent = item.title || `${modelLabel(item.model)} prompt`;
+    node.querySelector('.meta').textContent = `${modelLabel(item.model)} \u00B7 ${formatTime(item.createdAt)}`;
+    node.querySelector('.score').textContent = `${item.scoreRaw >= 0 ? '+' : ''}${item.scoreRaw}`;
+    node.querySelector('.prompt-body').textContent = item.body;
+    node.querySelector('.vote-up').addEventListener('click', () => castVote(item.id, 1, true));
+    node.querySelector('.vote-down').addEventListener('click', () => castVote(item.id, -1, true));
+    node.querySelector('.copy').addEventListener('click', async () => {
+      await navigator.clipboard.writeText(item.body);
+    });
+    node.querySelector('.share').addEventListener('click', () => sharePrompt(item));
+    const vibes = item.vibes || { clever: 0, useful: 0, funny: 0 };
+    for (const btn of node.querySelectorAll('.vibe-btn')) {
+      const tag = btn.dataset.tag;
+      btn.querySelector('.vibe-count').textContent = vibes[tag] > 0 ? vibes[tag] : '';
+      btn.addEventListener('click', () => castVibe(item.id, tag, btn));
+    }
+    activityList.appendChild(node);
+  }
+}
+
+async function loadActivityFeed({ silent = false } = {}) {
+  if (!silent) activityRefreshBtn.disabled = true;
+  try {
+    const payload = await api('/feed?limit=30');
+    const generatedAt = payload.generatedAt || Date.now();
+    const items = payload.items || [];
+
+    if (feedLastGeneratedAt === 0) {
+      // First load — render immediately
+      renderActivityItems(items);
+      feedLastGeneratedAt = generatedAt;
+    } else {
+      const newItems = items.filter((i) => i.createdAt > feedLastGeneratedAt);
+      if (newItems.length > 0 && silent) {
+        // Show the pill instead of re-rendering behind the user
+        feedPendingItems = items;
+        activityNewPill.textContent = `+${newItems.length} new`;
+        activityNewPill.classList.remove('hidden');
+      } else {
+        renderActivityItems(items);
+        feedLastGeneratedAt = generatedAt;
+        activityNewPill.classList.add('hidden');
+        feedPendingItems = [];
+      }
+    }
+  } catch {
+    // silent fail on poll
+  } finally {
+    activityRefreshBtn.disabled = false;
+  }
+}
+
+function startActivityPoll() {
+  clearInterval(feedPollTimer);
+  feedPollTimer = setInterval(() => loadActivityFeed({ silent: true }), 30_000);
+}
+
+activityRefreshBtn.addEventListener('click', () => loadActivityFeed());
+activityNewPill.addEventListener('click', () => {
+  renderActivityItems(feedPendingItems);
+  feedLastGeneratedAt = Date.now();
+  feedPendingItems = [];
+  activityNewPill.classList.add('hidden');
+  activityList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// â”€â”€ Group tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderGroupTabs() {
+  groupTabs.innerHTML = '';
+  for (const group of GROUPS) {
+    const models = MODEL_CATALOG.filter((m) => m.group === group);
+    const totalCount = models.reduce((sum, m) => sum + (summary[m.id]?.count || 0), 0);
+
+    const btn = document.createElement('button');
+    btn.className = 'group-tab' + (group === activeGroup ? ' active' : '');
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', group === activeGroup ? 'true' : 'false');
+    btn.innerHTML = `
+      <span class="group-dot" style="background:${GROUP_DOT[group] || '#888'}"></span>
+      <span class="group-name">${group}</span>
+      ${totalCount > 0 ? `<span class="group-badge">${totalCount}</span>` : ''}
+    `;
+    btn.addEventListener('click', () => {
+      activeGroup = group;
+      renderGroupTabs();
+      renderModelShelf();
+    });
+    groupTabs.appendChild(btn);
+  }
+}
+
+// â”€â”€ Model shelf â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderModelShelf() {
+  modelShelf.innerHTML = '';
+  const models = MODEL_CATALOG.filter((m) => m.group === activeGroup);
+
+  for (const model of models) {
+    const info = summary[model.id] || { count: 0, topTitle: null, topScore: 0 };
+    const hasPrompts = info.count > 0;
+
+    const card = document.createElement('div');
+    card.className = 'model-card' +
+      (activeModelId === model.id ? ' active' : '') +
+      (hasPrompts ? ' has-prompts' : ' empty');
+    card.setAttribute('role', 'option');
+    card.setAttribute('aria-selected', activeModelId === model.id ? 'true' : 'false');
+    card.setAttribute('tabindex', '0');
+
+    card.innerHTML = `
+      <div class="model-card-name">${model.label}</div>
+      <div class="model-card-count">${hasPrompts ? info.count + (info.count === 1 ? ' prompt' : ' prompts') : 'no prompts yet'}</div>
+      ${info.topTitle ? '<div class="model-card-top"></div>' : ''}
+    `;
+    if (info.topTitle) {
+      const topEl = card.querySelector('.model-card-top');
+      topEl.textContent = '\u201c' + info.topTitle + '\u201d';
+    }
+
+    card.addEventListener('click', () => selectModel(model.id, model.label));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectModel(model.id, model.label); }
+    });
+
+    modelShelf.appendChild(card);
+  }
+}
+
+// â”€â”€ Model selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function selectModel(modelId, label) {
+  activeModelId = modelId;
+
+  // Update shelf highlight
+  for (const card of modelShelf.querySelectorAll('.model-card')) {
+    const isActive = card.querySelector('.model-card-name')?.textContent === label;
+    card.classList.toggle('active', isActive);
+    card.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  }
+
+  // Show feed area
+  feedTitle.textContent = modelLabel(modelId);
+  feedHeader.classList.remove('hidden');
+  promptSection.classList.remove('hidden');
+
+  // Pre-fill submit form model
+  submitModelInput.value = modelLabel(modelId);
+  submitModelInput.disabled = true;
+
+  loadPrompts();
+}
+
+// â”€â”€ Prompt list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderPrompts(items) {
   promptList.innerHTML = '';
   if (!items.length) {
     const empty = document.createElement('li');
-    empty.className = 'card';
-    empty.textContent = 'No prompts yet. Add the first one.';
+    empty.className = 'card empty-state';
+    empty.textContent = 'No prompts yet for this model. Add the first one \u2193';
     promptList.appendChild(empty);
     return;
   }
 
   for (const item of items) {
     const node = promptTemplate.content.cloneNode(true);
+    // stamp id so deep-link scroll can find this card
+    const li = node.querySelector('li');
+    if (li) li.dataset.promptId = item.id;
     node.querySelector('.prompt-title').textContent = item.title || `${modelLabel(item.model)} prompt`;
-    node.querySelector('.meta').textContent = `${modelLabel(item.model)} | ${formatTime(item.createdAt)}`;
-    node.querySelector('.score').textContent = `${item.scoreRaw} raw | ${item.score} decayed`;
+    node.querySelector('.meta').textContent = `${modelLabel(item.model)} \u00B7 ${formatTime(item.createdAt)}`;
+    node.querySelector('.score').textContent = `${item.scoreRaw >= 0 ? '+' : ''}${item.scoreRaw}`;
     node.querySelector('.prompt-body').textContent = item.body;
 
-    node.querySelector('.vote-up').addEventListener('click', async () => {
-      await castVote(item.id, 1);
-    });
-    node.querySelector('.vote-down').addEventListener('click', async () => {
-      await castVote(item.id, -1);
-    });
+    node.querySelector('.vote-up').addEventListener('click', () => castVote(item.id, 1));
+    node.querySelector('.vote-down').addEventListener('click', () => castVote(item.id, -1));
     node.querySelector('.copy').addEventListener('click', async () => {
       await navigator.clipboard.writeText(item.body);
     });
+    node.querySelector('.share').addEventListener('click', () => sharePrompt(item));
+
+    const vibes = item.vibes || { clever: 0, useful: 0, funny: 0 };
+    for (const btn of node.querySelectorAll('.vibe-btn')) {
+      const tag = btn.dataset.tag;
+      const count = vibes[tag] || 0;
+      btn.querySelector('.vibe-count').textContent = count > 0 ? count : '';
+      btn.addEventListener('click', () => castVibe(item.id, tag, btn));
+    }
 
     promptList.appendChild(node);
   }
 }
 
 async function loadPrompts() {
+  if (!activeModelId) return;
   refreshBtn.disabled = true;
   try {
-    const modelValue = selectedModelValue();
-    if (!modelValue) {
-      renderPrompts([]);
-      return;
-    }
-    const model = encodeURIComponent(modelValue);
-    const windowMode = encodeURIComponent(windowSelect.value);
+    const model = encodeURIComponent(activeModelId);
+    const win = encodeURIComponent(windowSelect.value);
     const sort = encodeURIComponent(sortSelect.value);
-    const payload = await api(`/prompts?model=${model}&window=${windowMode}&sort=${sort}&limit=50`, {
-      method: 'GET',
-    });
+    const payload = await api(`/prompts?model=${model}&window=${win}&sort=${sort}&limit=50`);
     renderPrompts(payload.items || []);
   } catch (err) {
     alert(err.message);
@@ -212,46 +364,118 @@ async function loadPrompts() {
   }
 }
 
-async function castVote(promptId, direction) {
+async function castVote(promptId, direction, fromFeed = false) {
   try {
     await api(`/prompts/${promptId}/vote`, {
       method: 'POST',
       body: JSON.stringify({ direction }),
     });
-    await loadPrompts();
+    if (fromFeed) {
+      await loadActivityFeed();
+    } else {
+      await loadPrompts();
+    }
   } catch (err) {
     alert(err.message);
   }
 }
 
+function buildShareUrl(item) {
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?model=${encodeURIComponent(item.model)}&p=${encodeURIComponent(item.id)}`;
+}
+
+async function sharePrompt(item) {
+  const url = buildShareUrl(item);
+  const title = item.title || `${modelLabel(item.model)} prompt`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text: title, url });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // user cancelled — do nothing
+    }
+  }
+  // Fallback: copy link to clipboard
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link copied!');
+  } catch {
+    prompt('Copy this link:', url);
+  }
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+async function castVibe(promptId, tag, btn) {
+  try {
+    const res = await api(`/prompts/${promptId}/vibe`, {
+      method: 'POST',
+      body: JSON.stringify({ tag }),
+    });
+    // Optimistic UI: toggle active state and update count
+    const vibes = res.prompt.vibes || { clever: 0, useful: 0, funny: 0 };
+    btn.classList.toggle('active', res.active);
+    const countEl = btn.querySelector('.vibe-count');
+    if (countEl) countEl.textContent = vibes[tag] > 0 ? vibes[tag] : '';
+    // Also update sibling buttons in the same card (counts may have changed)
+    const card = btn.closest('.prompt');
+    if (card) {
+      for (const b of card.querySelectorAll('.vibe-btn')) {
+        const t = b.dataset.tag;
+        const c = vibes[t] || 0;
+        const ce = b.querySelector('.vibe-count');
+        if (ce) ce.textContent = c > 0 ? c : '';
+      }
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function submitPrompt() {
   submitBtn.disabled = true;
   try {
-    let modelValue;
-    let isCustom = false;
-    if (modelSelect.value === 'other') {
-      if (!syncCustomModelValidation()) {
-        submitModelInput.reportValidity();
-        return;
-      }
-      modelValue = normalizeCustomModelName(submitModelInput.value);
-      isCustom = true;
+    const rawModel = submitModelInput.value.trim();
+    if (!rawModel) { submitModelInput.focus(); return; }
+
+    // Determine if it's a catalog model or custom
+    const catalogEntry = MODEL_CATALOG.find(
+      (m) => m.id === rawModel || (FULL_LABEL[m.id] && FULL_LABEL[m.id].toLowerCase() === rawModel.toLowerCase())
+    );
+    let modelValue, isCustom;
+    if (catalogEntry && catalogEntry.id !== 'other') {
+      modelValue = catalogEntry.id;
+      isCustom = false;
     } else {
-      modelValue = modelSelect.value;
+      modelValue = normalizeCustomModelName(rawModel);
+      isCustom = true;
     }
-    const payload = {
-      model: modelValue,
-      title: titleInput.value,
-      body: bodyInput.value,
-      isCustom,
-    };
+
     await api('/prompts', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ model: modelValue, title: titleInput.value, body: bodyInput.value, isCustom }),
     });
+
     titleInput.value = '';
     bodyInput.value = '';
-    await loadPrompts();
+    submitDetails.open = false;
+
+    // Refresh summary counts + prompts + activity feed
+    await Promise.all([loadSummary(), loadActivityFeed()]);
+    if (activeModelId) await loadPrompts();
   } catch (err) {
     alert(err.message);
   } finally {
@@ -259,16 +483,48 @@ async function submitPrompt() {
   }
 }
 
+// â”€â”€ Wire events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 refreshBtn.addEventListener('click', loadPrompts);
 submitBtn.addEventListener('click', submitPrompt);
 windowSelect.addEventListener('change', loadPrompts);
 sortSelect.addEventListener('change', loadPrompts);
-modelSelect.addEventListener('change', () => {
-  syncOtherModelVisibility();
-  loadPrompts();
-});
-submitModelInput.addEventListener('input', syncCustomModelValidation);
 
-populateModelSelect();
-syncOtherModelVisibility();
-loadPrompts();
+// Allow typing a custom model in the submit form
+submitModelInput.addEventListener('focus', () => { submitModelInput.disabled = false; });
+submitModelInput.addEventListener('focus', () => { submitModelInput.disabled = false; });
+
+// Handle deep-link: ?model=gpt-4o&p=<promptId>
+async function handleDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const modelParam = params.get('model');
+  const promptParam = params.get('p');
+
+  // Always boot the activity feed + summary in parallel
+  await Promise.all([loadActivityFeed(), loadSummary()]);
+  startActivityPoll();
+
+  if (!modelParam) return;
+
+  const entry = MODEL_CATALOG.find((m) => m.id === modelParam);
+  if (entry) activeGroup = entry.group;
+  renderGroupTabs();
+  renderModelShelf();
+  selectModel(modelParam, entry ? entry.label : modelParam);
+
+  if (!promptParam) return;
+
+  setTimeout(() => {
+    for (const card of promptList.querySelectorAll('.prompt.card')) {
+      if (card.dataset.promptId === promptParam) {
+        card.classList.add('highlighted');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const det = card.querySelector('details');
+        if (det) det.open = true;
+        setTimeout(() => card.classList.remove('highlighted'), 3000);
+        break;
+      }
+    }
+  }, 700);
+}
+
+handleDeepLink();

@@ -194,6 +194,7 @@ app.post('/api/prompts', submitLimiter, async (req, res) => {
     expiresAt: expiresAtFrom(ts),
     votesUp: 0,
     votesDown: 0,
+    vibes: { clever: 0, useful: 0, funny: 0 },
     submitterTokenHash: tokenHash(token),
     lastSubmitIpHash: hashIp(clientIp(req)),
   };
@@ -314,6 +315,167 @@ app.get('/api/prompts', async (req, res) => {
     return res.json({ items: prompts.slice(0, limit), meta: { model, window, sort, limit } });
   } catch (err) {
     console.error('[gopromptup] list error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/models/summary
+// Returns { [modelId]: { count: N, topTitle: string|null, topScore: number } }
+// for all known catalog models + any custom models that exist.
+const CATALOG_MODEL_IDS = [
+  'gpt-4.1','gpt-4o','gpt-4o-mini','o3','o4-mini',
+  'claude-3.7-sonnet','claude-3.5-sonnet','claude-3.5-haiku',
+  'gemini-2.5-pro','gemini-2.5-flash','gemini-2.0-flash',
+  'llama-3.3-70b','llama-3.1-405b','llama-3.1-70b',
+  'grok-3','grok-3-mini',
+  'mistral-large','mistral-medium','codestral',
+  'deepseek-r1','deepseek-v3',
+  'qwen2.5-max','qwen2.5-72b-instruct',
+  'command-r-plus','command-r',
+  'phi-4','phi-3-medium',
+];
+
+// POST /api/prompts/:id/vibe
+// Toggles a vibe tag (clever | useful | funny) on a prompt. Per-token, per-day.
+// Does NOT affect the ranking score — purely expressive.
+const VALID_TAGS = new Set(['clever', 'useful', 'funny']);
+
+app.post('/api/prompts/:id/vibe', voteLimiter, async (req, res) => {
+  const token = requiredToken(req, res);
+  if (!token) return;
+
+  const tag = String((req.body && req.body.tag) || '').toLowerCase();
+  if (!VALID_TAGS.has(tag)) {
+    return res.status(400).json({ error: 'tag must be clever, useful, or funny' });
+  }
+
+  const promptId = req.params.id;
+  const tokenH = tokenHash(token);
+  const day = utcDayBucket(nowMs());
+  const vibeKey = `vibe:${promptId}:${tag}:${tokenH}:${day}`;
+
+  try {
+    const prompt = redis ? await redisGetPrompt(promptId) : memory.prompts.get(promptId);
+    if (!prompt) return res.status(404).json({ error: 'Prompt not found' });
+    if (nowMs() > prompt.expiresAt) return res.status(410).json({ error: 'Prompt expired' });
+
+    if (!prompt.vibes) prompt.vibes = { clever: 0, useful: 0, funny: 0 };
+
+    const prevRaw = redis ? await redisGetVote(vibeKey) : memory.votes.get(vibeKey);
+    const isOn = prevRaw === '1';
+
+    if (isOn) {
+      prompt.vibes[tag] = Math.max(0, (prompt.vibes[tag] || 0) - 1);
+      if (redis) await redisSetVote(vibeKey, '0');
+      else memory.votes.set(vibeKey, '0');
+    } else {
+      prompt.vibes[tag] = (prompt.vibes[tag] || 0) + 1;
+      if (redis) await redisSetVote(vibeKey, '1');
+      else memory.votes.set(vibeKey, '1');
+    }
+
+    prompt.updatedAt = nowMs();
+    if (redis) await redisSetPrompt(prompt);
+    else memory.prompts.set(prompt.id, prompt);
+
+    return res.json({ ok: true, active: !isOn, prompt });
+  } catch (err) {
+    console.error('[gopromptup] vibe error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/models/summary', async (req, res) => {
+  try {
+    const ts = nowMs();
+    const result = {};
+
+    const processIds = async (modelKey, ids) => {
+      let count = 0;
+      let topTitle = null;
+      let topScore = -Infinity;
+
+      for (const id of ids) {
+        const prompt = redis ? await redisGetPrompt(id) : memory.prompts.get(id);
+        if (!prompt || ts > prompt.expiresAt) continue;
+        count++;
+        const score = computedScore(prompt, ts);
+        if (score > topScore) {
+          topScore = score;
+          topTitle = prompt.title || null;
+        }
+      }
+
+      result[modelKey] = { count, topTitle, topScore: count ? Number(topScore.toFixed(4)) : 0 };
+    };
+
+    if (redis) {
+      // Fetch all catalog models in parallel
+      await Promise.all(CATALOG_MODEL_IDS.map(async (modelId) => {
+        const ids = await redisGetPromptIdsByModel(modelId);
+        await processIds(modelId, ids);
+      }));
+      // Also fetch custom/other
+      const customIds = await redis.smembers('gopromptup:custom-prompts');
+      await processIds('other', customIds);
+    } else {
+      // In-memory: group by model
+      const byModel = new Map();
+      for (const prompt of memory.prompts.values()) {
+        const key = prompt.isCustomModel ? 'other' : prompt.model;
+        if (!byModel.has(key)) byModel.set(key, []);
+        byModel.get(key).push(prompt.id);
+      }
+      for (const [modelKey, ids] of byModel.entries()) {
+        await processIds(modelKey, ids);
+      }
+      // Ensure all catalog models are present
+      for (const modelId of CATALOG_MODEL_IDS) {
+        if (!result[modelId]) result[modelId] = { count: 0, topTitle: null, topScore: 0 };
+      }
+    }
+
+    return res.json({ summary: result, generatedAt: ts });
+  } catch (err) {
+    console.error('[gopromptup] models/summary error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ── Activity feed: all models, newest first ─────────────────────────────────
+app.get('/api/feed', async (req, res) => {
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit || '30', 10)));
+  try {
+    const ts = nowMs();
+    const prompts = [];
+
+    if (redis) {
+      const allIds = [...CATALOG_MODEL_IDS];
+      // Collect from all catalog models + custom in parallel
+      const buckets = await Promise.all([
+        ...allIds.map((modelId) => redisGetPromptIdsByModel(modelId)),
+        redis.smembers('gopromptup:custom-prompts'),
+      ]);
+      const flatIds = buckets.flat();
+      // Fetch in parallel, deduplicate by id
+      const seen = new Set();
+      const raw = await Promise.all(flatIds.map((id) => redisGetPrompt(id)));
+      for (const prompt of raw) {
+        if (!prompt || ts > prompt.expiresAt || seen.has(prompt.id)) continue;
+        seen.add(prompt.id);
+        prompts.push({ ...prompt, scoreRaw: prompt.votesUp - prompt.votesDown });
+      }
+    } else {
+      for (const prompt of memory.prompts.values()) {
+        if (ts > prompt.expiresAt) continue;
+        prompts.push({ ...prompt, scoreRaw: prompt.votesUp - prompt.votesDown });
+      }
+    }
+
+    prompts.sort((a, b) => b.createdAt - a.createdAt);
+    return res.json({ items: prompts.slice(0, limit), generatedAt: ts });
+  } catch (err) {
+    console.error('[gopromptup] feed error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

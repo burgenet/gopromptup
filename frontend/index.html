@@ -13,54 +13,70 @@
     <main class="shell">
       <header class="masthead">
         <img class="site-logo" src="./src/gopromptuplogo.png" alt="GoPromptUp" />
-        <h1>Useful prompts only.</h1>
-        <p class="sub">No accounts. No tracking. Tokens rotate. Votes decay.</p>
+        <h1>Only the best prompts survive.</h1>
+        <p class="sub">No accounts &middot; No tracking &middot; Tokens rotate &middot; Votes decay &middot; Prompts expire &middot; Just for fun.</p>
       </header>
 
-      <section class="controls card">
-        <label>
-          Model
-          <select id="modelSelect"></select>
-        </label>
-        <label>
-          Window
-          <select id="windowSelect">
-            <option value="today">Top today</option>
-            <option value="week">Top this week</option>
-            <option value="alltime" selected>All-time (decay)</option>
+      <!-- Activity feed — all models, newest first -->
+      <section id="activitySection" class="activity-section">
+        <div class="activity-header">
+          <span class="activity-title">Latest</span>
+          <div class="activity-controls">
+            <button id="activityNewPill" class="new-pill hidden" aria-live="polite"></button>
+            <button id="activityRefreshBtn" class="refresh-btn" aria-label="Refresh feed">&#x21BA;</button>
+          </div>
+        </div>
+        <ul id="activityList" class="prompt-list activity-list"></ul>
+      </section>
+
+      <!-- Group tab strip -->
+      <nav id="groupTabs" class="group-tabs" role="tablist" aria-label="Model providers"></nav>
+
+      <!-- Model card shelf -->
+      <div id="modelShelf" class="model-shelf" role="listbox" aria-label="Models"></div>
+
+      <!-- Prompt feed header -->
+      <div id="feedHeader" class="feed-header hidden">
+        <span id="feedTitle" class="feed-title"></span>
+        <div class="feed-controls">
+          <select id="windowSelect" aria-label="Time window">
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="alltime" selected>All time</option>
           </select>
-        </label>
-        <label>
-          Sort
-          <select id="sortSelect">
+          <select id="sortSelect" aria-label="Sort">
             <option value="top" selected>Top</option>
             <option value="new">Newest</option>
           </select>
-        </label>
-        <button id="refreshBtn">Refresh</button>
-      </section>
+          <button id="refreshBtn" aria-label="Refresh">↺</button>
+        </div>
+      </div>
 
-      <section class="submit card">
-        <h2>Submit Prompt</h2>
-        <label id="submitModelWrap">
-          Model name
-          <input id="submitModelInput" maxlength="120" placeholder="e.g. Llama 4 Scout, Grok 3.5 Mini…" disabled />
-        </label>
-        <input id="titleInput" maxlength="140" placeholder="Optional title" />
-        <textarea id="bodyInput" maxlength="4000" placeholder="Paste your prompt"></textarea>
-        <button id="submitBtn">Submit</button>
-        <p class="hint">Token is stored in your browser only and used for accountless voting limits.</p>
-      </section>
-
-      <section>
+      <!-- Prompt list -->
+      <section id="promptSection" class="hidden">
         <ul id="promptList" class="prompt-list"></ul>
       </section>
+
+      <!-- Submit form — collapsed by default -->
+      <details id="submitDetails" class="submit card">
+        <summary>+ Submit a prompt</summary>
+        <div class="submit-inner">
+          <label id="submitModelWrap">
+            Model
+            <input id="submitModelInput" maxlength="120" placeholder="e.g. Llama 4 Scout, Grok 3.5 Mini…" />
+          </label>
+          <input id="titleInput" maxlength="140" placeholder="Optional title" />
+          <textarea id="bodyInput" maxlength="4000" placeholder="Paste your prompt"></textarea>
+          <button id="submitBtn">Submit</button>
+          <p class="hint">Token is stored in your browser only and used for accountless voting limits.</p>
+        </div>
+      </details>
     </main>
 
     <template id="promptTemplate">
       <li class="prompt card">
         <div class="row">
-          <div>
+          <div class="prompt-left">
             <h3 class="prompt-title"></h3>
             <p class="meta"></p>
           </div>
@@ -71,18 +87,25 @@
         <details>
           <summary>Show prompt</summary>
           <pre class="prompt-body"></pre>
+          <div class="vibes">
+            <span class="vibes-label">What's the vibe?</span>
+            <button class="vibe-btn" data-tag="clever">Clever <span class="vibe-count"></span></button>
+            <button class="vibe-btn" data-tag="useful">Useful <span class="vibe-count"></span></button>
+            <button class="vibe-btn" data-tag="funny">Funny <span class="vibe-count"></span></button>
+          </div>
         </details>
         <div class="actions">
-          <button class="vote-up">Up</button>
-          <button class="vote-down">Down</button>
-          <button class="copy">Copy</button>
+          <button class="vote-up">▲ Up</button>
+          <button class="vote-down">▼ Down</button>
+          <button class="copy">⎘ Copy</button>
+          <button class="share">↗ Share</button>
         </div>
       </li>
     </template>
 
     <script src="./src/app.js"></script>
     <footer class="footer">
-      Powered by <a href="https://epheme.dev" target="_blank" rel="noopener noreferrer">Epheme</a>
+       &middot; Prompts are user-submitted. Use at your own discretion.
     </footer>
   </body>
 </html>

@@ -1,12 +1,13 @@
-{
+﻿{
   "name": "gopromptup-frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "http-server . -p 5173 -c-1",
+    "dev": "node dev-server.js",
     "start": "http-server . -p 5173 -c-1"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "http-proxy-middleware": "^3.0.3"
   }
 }

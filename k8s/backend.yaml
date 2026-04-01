@@ -1,0 +1,55 @@
+# gopromptup backend — Deployment + Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gopromptup-backend
+  namespace: infra
+  labels:
+    app: gopromptup-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gopromptup-backend
+  template:
+    metadata:
+      labels:
+        app: gopromptup-backend
+    spec:
+      containers:
+        - name: backend
+          image: silentcoil.sillygooseia.com:5000/gopromptup/backend:v1.0.4
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3010
+          env:
+            - name: PORT
+              value: "3010"
+            - name: REDIS_URL
+              value: "redis://gopromptup-redis:6379"
+            - name: FRONTEND_ORIGIN
+              value: "https://gopromptup.com"
+            - name: PROMPT_TTL_DAYS
+              value: "30"
+            - name: DECAY_HALF_LIFE_HOURS
+              value: "72"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gopromptup-backend
+  namespace: infra
+spec:
+  selector:
+    app: gopromptup-backend
+  ports:
+    - port: 3010
+      targetPort: 3010

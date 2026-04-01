@@ -1,0 +1,44 @@
+# gopromptup frontend — Deployment + Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gopromptup-frontend
+  namespace: infra
+  labels:
+    app: gopromptup-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gopromptup-frontend
+  template:
+    metadata:
+      labels:
+        app: gopromptup-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: silentcoil.sillygooseia.com:5000/gopromptup/frontend:v1.0.4
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gopromptup-frontend
+  namespace: infra
+spec:
+  selector:
+    app: gopromptup-frontend
+  ports:
+    - port: 80
+      targetPort: 80
