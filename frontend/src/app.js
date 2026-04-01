@@ -73,7 +73,9 @@ const refreshBtn   = document.getElementById('refreshBtn');
 const submitBtn    = document.getElementById('submitBtn');
 const titleInput   = document.getElementById('titleInput');
 const bodyInput    = document.getElementById('bodyInput');
-const submitModelInput = document.getElementById('submitModelInput');
+const submitModelInput  = document.getElementById('submitModelInput');
+const submitModelSelect = document.getElementById('submitModelSelect');
+const submitCustomModelWrap = document.getElementById('submitCustomModelWrap');
 const activityList        = document.getElementById('activityList');
 const activityNewPill     = document.getElementById('activityNewPill');
 const activityRefreshBtn  = document.getElementById('activityRefreshBtn');
@@ -106,6 +108,39 @@ function switchTab(tab) {
 tabBrowse.addEventListener('click', () => switchTab('browse'));
 tabLatest.addEventListener('click', () => switchTab('latest'));
 tabShare.addEventListener('click', () => switchTab('share'));
+
+// ── Model select on Share tab ────────────────────────────────────────────────
+(function buildModelSelect() {
+  for (const group of GROUPS) {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = group;
+    for (const m of MODEL_CATALOG.filter((x) => x.group === group)) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.label;
+      optgroup.appendChild(opt);
+    }
+    submitModelSelect.appendChild(optgroup);
+  }
+  // "Other" option at bottom
+  const otherOpt = submitModelSelect.querySelector('option[value="other"]');
+  if (otherOpt) otherOpt.textContent = 'Other / not listed…';
+})();
+
+function onModelSelectChange() {
+  const val = submitModelSelect.value;
+  if (val === 'other') {
+    submitCustomModelWrap.classList.remove('hidden');
+    submitModelInput.value = '';
+    submitModelInput.focus();
+  } else {
+    submitCustomModelWrap.classList.add('hidden');
+    submitModelInput.value = val; // store the id for submitPrompt to read
+  }
+}
+submitModelSelect.addEventListener('change', onModelSelectChange);
+// Init hidden state on load
+onModelSelectChange();
 
 // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let activeGroup = GROUPS[0];
@@ -385,16 +420,14 @@ function selectModel(modelId, label) {
   feedHeader.classList.remove('hidden');
   promptSection.classList.remove('hidden');
 
-  // Pre-fill submit form model — leave editable for "Other"
+  // Sync the Share tab model select
+  submitModelSelect.value = modelId;
+  onModelSelectChange();
+
+  // For "Other", jump straight to Share tab so user can type the model name
   if (modelId === 'other') {
-    submitModelInput.value = '';
-    submitModelInput.disabled = false;
-    submitModelInput.placeholder = 'e.g. Llama 4 Scout, Grok 3.5 Mini…';
     switchTab('share');
     submitModelInput.focus();
-  } else {
-    submitModelInput.value = modelLabel(modelId);
-    submitModelInput.disabled = true;
   }
 
   loadPrompts();
@@ -546,19 +579,19 @@ async function submitPrompt() {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting…';
   try {
-    const rawModel = submitModelInput.value.trim();
-    if (!rawModel) { submitModelInput.focus(); return; }
+    const selectedId = submitModelSelect.value;
+    const isOther = selectedId === 'other';
+    const rawCustom = submitModelInput.value.trim();
 
-    // Determine if it's a catalog model or custom
-    const catalogEntry = MODEL_CATALOG.find(
-      (m) => m.id === rawModel || (FULL_LABEL[m.id] && FULL_LABEL[m.id].toLowerCase() === rawModel.toLowerCase())
-    );
+    if (!selectedId) { submitModelSelect.focus(); return; }
+    if (isOther && !rawCustom) { submitModelInput.focus(); return; }
+
     let modelValue, isCustom;
-    if (catalogEntry && catalogEntry.id !== 'other') {
-      modelValue = catalogEntry.id;
+    if (!isOther) {
+      modelValue = selectedId;
       isCustom = false;
     } else {
-      modelValue = normalizeCustomModelName(rawModel);
+      modelValue = normalizeCustomModelName(rawCustom);
       isCustom = true;
     }
 
@@ -569,6 +602,8 @@ async function submitPrompt() {
 
     titleInput.value = '';
     bodyInput.value = '';
+    submitModelInput.value = '';
+    submitCustomModelWrap.classList.add('hidden');
     switchTab('browse');
     showToast('Prompt submitted ✓');
 
@@ -591,9 +626,6 @@ refreshBtn.addEventListener('click', () => {
 submitBtn.addEventListener('click', submitPrompt);
 windowSelect.addEventListener('change', loadPrompts);
 sortSelect.addEventListener('change', loadPrompts);
-
-// Allow typing a custom model in the submit form
-submitModelInput.addEventListener('focus', () => { submitModelInput.disabled = false; });
 
 // Handle deep-link: ?model=gpt-4o&p=<promptId>
 async function handleDeepLink() {
