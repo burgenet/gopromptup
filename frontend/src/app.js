@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 const API_BASE = '/api';
 const TOKEN_KEY = 'gopromptup_token_v1';
@@ -115,8 +115,44 @@ function modelLabel(modelId) {
   return FULL_LABEL[modelId] || MODEL_CATALOG.find((m) => m.id === modelId)?.label || modelId;
 }
 
+function timeAgo(ts) {
+  const sec = Math.floor((Date.now() - ts) / 1000);
+  if (sec < 60) return 'just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 14) return `${day}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
 function formatTime(ts) {
-  return new Date(ts).toLocaleString();
+  return timeAgo(ts);
+}
+
+function scoreClass(n) {
+  if (n >= 10) return 'score-high';
+  if (n > 0)   return 'score-pos';
+  if (n === 0) return 'score-zero';
+  return 'score-neg';
+}
+
+function animateVote(btn) {
+  btn.classList.remove('vote-pop');
+  void btn.offsetWidth;
+  btn.classList.add('vote-pop');
+  btn.addEventListener('animationend', () => btn.classList.remove('vote-pop'), { once: true });
+}
+
+function flashCopy(btn) {
+  const original = btn.textContent;
+  btn.textContent = 'Copied ✓';
+  btn.classList.add('copy-done');
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.classList.remove('copy-done');
+  }, 1500);
 }
 
 function normalizeCustomModelName(raw) {
@@ -145,7 +181,7 @@ function renderActivityItems(items) {
   if (!items.length) {
     const empty = document.createElement('li');
     empty.className = 'card empty-state';
-    empty.textContent = 'No prompts yet. Be the first to submit one \u2193';
+    empty.textContent = 'Nothing here yet — be the first to share one ↓';
     activityList.appendChild(empty);
     return;
   }
@@ -160,12 +196,17 @@ function renderActivityItems(items) {
     }
     node.querySelector('.prompt-title').textContent = item.title || `${modelLabel(item.model)} prompt`;
     node.querySelector('.meta').textContent = `${modelLabel(item.model)} \u00B7 ${formatTime(item.createdAt)}`;
-    node.querySelector('.score').textContent = `${item.scoreRaw >= 0 ? '+' : ''}${item.scoreRaw}`;
+    const scoreElA = node.querySelector('.score');
+    scoreElA.textContent = `${item.scoreRaw >= 0 ? '+' : ''}${item.scoreRaw}`;
+    scoreElA.className = 'score ' + scoreClass(item.scoreRaw);
     node.querySelector('.prompt-body').textContent = item.body;
-    node.querySelector('.vote-up').addEventListener('click', () => castVote(item.id, 1, true));
-    node.querySelector('.vote-down').addEventListener('click', () => castVote(item.id, -1, true));
-    node.querySelector('.copy').addEventListener('click', async () => {
+    const voteUpA = node.querySelector('.vote-up');
+    const voteDownA = node.querySelector('.vote-down');
+    voteUpA.addEventListener('click', () => { animateVote(voteUpA); castVote(item.id, 1, true); });
+    voteDownA.addEventListener('click', () => { animateVote(voteDownA); castVote(item.id, -1, true); });
+    node.querySelector('.copy').addEventListener('click', async (e) => {
       await navigator.clipboard.writeText(item.body);
+      flashCopy(e.currentTarget);
     });
     node.querySelector('.share').addEventListener('click', () => sharePrompt(item));
     const vibes = item.vibes || { clever: 0, useful: 0, funny: 0 };
@@ -215,7 +256,10 @@ function startActivityPoll() {
   feedPollTimer = setInterval(() => loadActivityFeed({ silent: true }), 30_000);
 }
 
-activityRefreshBtn.addEventListener('click', () => loadActivityFeed());
+activityRefreshBtn.addEventListener('click', () => {
+  activityRefreshBtn.classList.add('spinning');
+  loadActivityFeed().finally(() => activityRefreshBtn.classList.remove('spinning'));
+});
 activityNewPill.addEventListener('click', () => {
   renderActivityItems(feedPendingItems);
   feedLastGeneratedAt = Date.now();
@@ -254,14 +298,19 @@ function renderModelShelf() {
   modelShelf.innerHTML = '';
   const models = MODEL_CATALOG.filter((m) => m.group === activeGroup);
 
+  const counts = models.map((m) => summary[m.id]?.count || 0).filter((c) => c > 0).sort((a, b) => b - a);
+  const hotCutoff = counts.length > 0 ? counts[Math.max(0, Math.ceil(counts.length * 0.25) - 1)] : Infinity;
+
   for (const model of models) {
     const info = summary[model.id] || { count: 0, topTitle: null, topScore: 0 };
     const hasPrompts = info.count > 0;
+    const isHot = hasPrompts && info.count >= hotCutoff;
 
     const card = document.createElement('div');
     card.className = 'model-card' +
       (activeModelId === model.id ? ' active' : '') +
       (hasPrompts ? ' has-prompts' : ' empty');
+    if (isHot) card.dataset.hot = 'true';
     card.setAttribute('role', 'option');
     card.setAttribute('aria-selected', activeModelId === model.id ? 'true' : 'false');
     card.setAttribute('tabindex', '0');
@@ -314,7 +363,7 @@ function renderPrompts(items) {
   if (!items.length) {
     const empty = document.createElement('li');
     empty.className = 'card empty-state';
-    empty.textContent = 'No prompts yet for this model. Add the first one \u2193';
+    empty.textContent = 'No prompts here yet — be the first to share one ↓';
     promptList.appendChild(empty);
     return;
   }
@@ -326,13 +375,18 @@ function renderPrompts(items) {
     if (li) li.dataset.promptId = item.id;
     node.querySelector('.prompt-title').textContent = item.title || `${modelLabel(item.model)} prompt`;
     node.querySelector('.meta').textContent = `${modelLabel(item.model)} \u00B7 ${formatTime(item.createdAt)}`;
-    node.querySelector('.score').textContent = `${item.scoreRaw >= 0 ? '+' : ''}${item.scoreRaw}`;
+    const scoreEl = node.querySelector('.score');
+    scoreEl.textContent = `${item.scoreRaw >= 0 ? '+' : ''}${item.scoreRaw}`;
+    scoreEl.className = 'score ' + scoreClass(item.scoreRaw);
     node.querySelector('.prompt-body').textContent = item.body;
 
-    node.querySelector('.vote-up').addEventListener('click', () => castVote(item.id, 1));
-    node.querySelector('.vote-down').addEventListener('click', () => castVote(item.id, -1));
-    node.querySelector('.copy').addEventListener('click', async () => {
+    const voteUp = node.querySelector('.vote-up');
+    const voteDown = node.querySelector('.vote-down');
+    voteUp.addEventListener('click', () => { animateVote(voteUp); castVote(item.id, 1); });
+    voteDown.addEventListener('click', () => { animateVote(voteDown); castVote(item.id, -1); });
+    node.querySelector('.copy').addEventListener('click', async (e) => {
       await navigator.clipboard.writeText(item.body);
+      flashCopy(e.currentTarget);
     });
     node.querySelector('.share').addEventListener('click', () => sharePrompt(item));
 
@@ -358,7 +412,7 @@ async function loadPrompts() {
     const payload = await api(`/prompts?model=${model}&window=${win}&sort=${sort}&limit=50`);
     renderPrompts(payload.items || []);
   } catch (err) {
-    alert(err.message);
+    showToast('Couldn\'t load prompts');
   } finally {
     refreshBtn.disabled = false;
   }
@@ -376,7 +430,7 @@ async function castVote(promptId, direction, fromFeed = false) {
       await loadPrompts();
     }
   } catch (err) {
-    alert(err.message);
+    showToast('Vote didn\'t go through');
   }
 }
 
@@ -440,13 +494,14 @@ async function castVibe(promptId, tag, btn) {
       }
     }
   } catch (err) {
-    alert(err.message);
+    showToast('Vibe didn\'t register');
   }
 }
 
 // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function submitPrompt() {
   submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting…';
   try {
     const rawModel = submitModelInput.value.trim();
     if (!rawModel) { submitModelInput.focus(); return; }
@@ -472,25 +527,29 @@ async function submitPrompt() {
     titleInput.value = '';
     bodyInput.value = '';
     submitDetails.open = false;
+    showToast('Prompt submitted ✓');
 
     // Refresh summary counts + prompts + activity feed
     await Promise.all([loadSummary(), loadActivityFeed()]);
     if (activeModelId) await loadPrompts();
   } catch (err) {
-    alert(err.message);
+    showToast('Couldn\'t submit — ' + err.message);
   } finally {
     submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit';
   }
 }
 
-// â”€â”€ Wire events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-refreshBtn.addEventListener('click', loadPrompts);
+// -- Wire events ----------------------------------------------------------
+refreshBtn.addEventListener('click', () => {
+  refreshBtn.classList.add('spinning');
+  loadPrompts().finally(() => refreshBtn.classList.remove('spinning'));
+});
 submitBtn.addEventListener('click', submitPrompt);
 windowSelect.addEventListener('change', loadPrompts);
 sortSelect.addEventListener('change', loadPrompts);
 
 // Allow typing a custom model in the submit form
-submitModelInput.addEventListener('focus', () => { submitModelInput.disabled = false; });
 submitModelInput.addEventListener('focus', () => { submitModelInput.disabled = false; });
 
 // Handle deep-link: ?model=gpt-4o&p=<promptId>

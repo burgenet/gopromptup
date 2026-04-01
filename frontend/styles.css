@@ -367,7 +367,20 @@ button:hover { filter: brightness(1.1); }
   padding: 0.4rem 0.75rem;
 }
 
+.vote-up { background: var(--accent); }
 .vote-down { background: var(--accent-2); }
+
+.copy {
+  background: transparent;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+}
+
+.copy:hover {
+  border-color: var(--accent);
+  background: rgba(11, 110, 79, 0.06);
+  filter: none;
+}
 
 .share {
   background: transparent;
@@ -559,6 +572,52 @@ button:hover { filter: brightness(1.1); }
 }
 
 .footer a:hover { text-decoration: underline; }
+
+/* ── Score color grading ───────────────────────────────── */
+.score.score-high { color: #076d42; font-weight: 700; }
+.score.score-pos  { color: var(--accent); }
+.score.score-zero { color: var(--muted); }
+.score.score-neg  { color: var(--accent-2); }
+
+/* ── Vote pop micro-interaction ────────────────────────── */
+@keyframes vote-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+.vote-pop { animation: vote-pop 0.22s ease-out; }
+
+/* ── Copy confirm state ────────────────────────────────── */
+.copy-done {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+/* ── Trending hot badge on model cards ─────────────────── */
+.model-card[data-hot]::after {
+  content: '↑ hot';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.model-card.active[data-hot]::after {
+  color: rgba(255,255,255,0.55);
+}
+
+/* ── Refresh spin animation ────────────────────────────── */
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spinning { animation: spin-once 0.5s ease-in-out; }
 
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 600px) {
