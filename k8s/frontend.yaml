@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: silentcoil.sillygooseia.com:5000/gopromptup/frontend:v1.0.4
+          image: silentcoil.sillygooseia.com:5000/gopromptup/frontend:v1.0.5
           imagePullPolicy: Always
           ports:
             - containerPort: 80
