@@ -47,6 +47,52 @@ body {
   color: var(--muted);
 }
 
+/* ── Main tab bar ──────────────────────────────────────── */
+.main-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 0;
+}
+
+.main-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem 0.65rem;
+  cursor: pointer;
+  margin-bottom: -2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.main-tab:hover { color: var(--ink); filter: none; }
+
+.main-tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.main-tab-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-family: 'IBM Plex Mono', monospace;
+  border-radius: 999px;
+  padding: 0.1em 0.45em;
+  font-weight: 500;
+  animation: pill-pop 0.2s ease-out;
+}
+
+.tab-panel { display: grid; gap: 1.2rem; }
+
 /* ── Group tabs ────────────────────────────────────────── */
 .group-tabs {
   display: flex;
@@ -235,6 +281,21 @@ body {
 }
 
 .feed-controls button:hover { filter: brightness(1.15); }
+
+/* ── Share panel ───────────────────────────────────────── */
+.share-panel-header { margin-bottom: 0.25rem; }
+
+.share-panel-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+}
+
+.share-panel-sub {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin: 0;
+}
 
 /* ── Submit accordion ──────────────────────────────────── */
 .submit {

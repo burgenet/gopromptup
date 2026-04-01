@@ -17,50 +17,52 @@
         <p class="sub">No accounts &middot; No tracking &middot; Tokens rotate &middot; Votes decay &middot; Prompts expire &middot; Just for fun.</p>
       </header>
 
-      <!-- Activity feed — all models, newest first -->
-      <section id="activitySection" class="activity-section">
-        <div class="activity-header">
-          <span class="activity-title">Latest</span>
-          <div class="activity-controls">
-            <button id="activityNewPill" class="new-pill hidden" aria-live="polite"></button>
-            <button id="activityRefreshBtn" class="refresh-btn" aria-label="Refresh feed">&#x21BA;</button>
-          </div>
-        </div>
-        <ul id="activityList" class="prompt-list activity-list"></ul>
-      </section>
-
-      <!-- Group tab strip -->
-      <nav id="groupTabs" class="group-tabs" role="tablist" aria-label="Model providers"></nav>
-
-      <!-- Model card shelf -->
-      <div id="modelShelf" class="model-shelf" role="listbox" aria-label="Models"></div>
-
-      <!-- Prompt feed header -->
-      <div id="feedHeader" class="feed-header hidden">
-        <span id="feedTitle" class="feed-title"></span>
-        <div class="feed-controls">
-          <select id="windowSelect" aria-label="Time window">
-            <option value="today">Today</option>
-            <option value="week">This week</option>
-            <option value="alltime" selected>All time</option>
-          </select>
-          <select id="sortSelect" aria-label="Sort">
-            <option value="top" selected>Top</option>
-            <option value="new">Newest</option>
-          </select>
-          <button id="refreshBtn" aria-label="Refresh">↺</button>
-        </div>
+      <!-- Main tab bar -->
+      <div class="main-tabs" role="tablist" aria-label="Main sections">
+        <button class="main-tab active" id="tabBrowse" role="tab" aria-selected="true" aria-controls="panelBrowse">Browse</button>
+        <button class="main-tab" id="tabLatest" role="tab" aria-selected="false" aria-controls="panelLatest">Latest <span id="latestBadge" class="main-tab-badge hidden"></span></button>
+        <button class="main-tab" id="tabShare" role="tab" aria-selected="false" aria-controls="panelShare">↑ Share</button>
       </div>
 
-      <!-- Prompt list -->
-      <section id="promptSection" class="hidden">
-        <ul id="promptList" class="prompt-list"></ul>
-      </section>
+      <!-- Browse panel -->
+      <div id="panelBrowse" class="tab-panel" role="tabpanel" aria-labelledby="tabBrowse">
+        <!-- Group tab strip -->
+        <nav id="groupTabs" class="group-tabs" role="tablist" aria-label="Model providers"></nav>
 
-      <!-- Submit form — collapsed by default -->
-      <details id="submitDetails" class="submit card">
-        <summary>↑ Share a prompt</summary>
-        <div class="submit-inner">
+        <!-- Model card shelf -->
+        <div id="modelShelf" class="model-shelf" role="listbox" aria-label="Models"></div>
+
+        <!-- Prompt feed header -->
+        <div id="feedHeader" class="feed-header hidden">
+          <span id="feedTitle" class="feed-title"></span>
+          <div class="feed-controls">
+            <select id="windowSelect" aria-label="Time window">
+              <option value="today">Today</option>
+              <option value="week">This week</option>
+              <option value="alltime" selected>All time</option>
+            </select>
+            <select id="sortSelect" aria-label="Sort">
+              <option value="top" selected>Top</option>
+              <option value="new">Newest</option>
+            </select>
+            <button id="refreshBtn" aria-label="Refresh">↺</button>
+          </div>
+        </div>
+
+        <!-- Prompt list -->
+        <section id="promptSection" class="hidden">
+          <ul id="promptList" class="prompt-list"></ul>
+        </section>
+
+      </div>
+
+      <!-- Share panel -->
+      <div id="panelShare" class="tab-panel hidden" role="tabpanel" aria-labelledby="tabShare">
+        <div class="share-panel-header">
+          <h2 class="share-panel-title">Share a prompt</h2>
+          <p class="share-panel-sub">No account needed. Token is stored in your browser only and used for accountless voting limits.</p>
+        </div>
+        <div class="submit-inner card">
           <label id="submitModelWrap">
             Model
             <input id="submitModelInput" maxlength="120" placeholder="e.g. Llama 4 Scout, Grok 3.5 Mini…" />
@@ -68,9 +70,22 @@
           <input id="titleInput" maxlength="140" placeholder="Optional title" />
           <textarea id="bodyInput" maxlength="4000" placeholder="Paste your prompt"></textarea>
           <button id="submitBtn">Submit</button>
-          <p class="hint">Token is stored in your browser only and used for accountless voting limits.</p>
         </div>
-      </details>
+      </div>
+
+      <!-- Latest panel -->
+      <div id="panelLatest" class="tab-panel hidden" role="tabpanel" aria-labelledby="tabLatest">
+        <section id="activitySection" class="activity-section">
+          <div class="activity-header">
+            <span class="activity-title">Latest</span>
+            <div class="activity-controls">
+              <button id="activityNewPill" class="new-pill hidden" aria-live="polite"></button>
+              <button id="activityRefreshBtn" class="refresh-btn" aria-label="Refresh feed">&#x21BA;</button>
+            </div>
+          </div>
+          <ul id="activityList" class="prompt-list activity-list"></ul>
+        </section>
+      </div>
     </main>
 
     <template id="promptTemplate">

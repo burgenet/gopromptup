@@ -74,10 +74,38 @@ const submitBtn    = document.getElementById('submitBtn');
 const titleInput   = document.getElementById('titleInput');
 const bodyInput    = document.getElementById('bodyInput');
 const submitModelInput = document.getElementById('submitModelInput');
-const submitDetails = document.getElementById('submitDetails');
 const activityList        = document.getElementById('activityList');
 const activityNewPill     = document.getElementById('activityNewPill');
 const activityRefreshBtn  = document.getElementById('activityRefreshBtn');
+const tabBrowse           = document.getElementById('tabBrowse');
+const tabLatest           = document.getElementById('tabLatest');
+const tabShare            = document.getElementById('tabShare');
+const panelBrowse         = document.getElementById('panelBrowse');
+const panelLatest         = document.getElementById('panelLatest');
+const panelShare          = document.getElementById('panelShare');
+const latestBadge         = document.getElementById('latestBadge');
+
+// ── Main tab switching ───────────────────────────────────────────────────────
+function switchTab(tab) {
+  tabBrowse.classList.toggle('active', tab === 'browse');
+  tabBrowse.setAttribute('aria-selected', tab === 'browse' ? 'true' : 'false');
+  panelBrowse.classList.toggle('hidden', tab !== 'browse');
+  tabLatest.classList.toggle('active', tab === 'latest');
+  tabLatest.setAttribute('aria-selected', tab === 'latest' ? 'true' : 'false');
+  panelLatest.classList.toggle('hidden', tab !== 'latest');
+  tabShare.classList.toggle('active', tab === 'share');
+  tabShare.setAttribute('aria-selected', tab === 'share' ? 'true' : 'false');
+  panelShare.classList.toggle('hidden', tab !== 'share');
+  if (tab === 'latest') {
+    // Clear badge when opening Latest
+    latestBadge.textContent = '';
+    latestBadge.classList.add('hidden');
+  }
+}
+
+tabBrowse.addEventListener('click', () => switchTab('browse'));
+tabLatest.addEventListener('click', () => switchTab('latest'));
+tabShare.addEventListener('click', () => switchTab('share'));
 
 // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let activeGroup = GROUPS[0];
@@ -237,6 +265,11 @@ async function loadActivityFeed({ silent = false } = {}) {
         feedPendingItems = items;
         activityNewPill.textContent = `+${newItems.length} new`;
         activityNewPill.classList.remove('hidden');
+        // Also badge the Latest tab if it's not active
+        if (!tabLatest.classList.contains('active')) {
+          latestBadge.textContent = newItems.length;
+          latestBadge.classList.remove('hidden');
+        }
       } else {
         renderActivityItems(items);
         feedLastGeneratedAt = generatedAt;
@@ -265,6 +298,8 @@ activityNewPill.addEventListener('click', () => {
   feedLastGeneratedAt = Date.now();
   feedPendingItems = [];
   activityNewPill.classList.add('hidden');
+  latestBadge.textContent = '';
+  latestBadge.classList.add('hidden');
   activityList.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
@@ -350,9 +385,17 @@ function selectModel(modelId, label) {
   feedHeader.classList.remove('hidden');
   promptSection.classList.remove('hidden');
 
-  // Pre-fill submit form model
-  submitModelInput.value = modelLabel(modelId);
-  submitModelInput.disabled = true;
+  // Pre-fill submit form model — leave editable for "Other"
+  if (modelId === 'other') {
+    submitModelInput.value = '';
+    submitModelInput.disabled = false;
+    submitModelInput.placeholder = 'e.g. Llama 4 Scout, Grok 3.5 Mini…';
+    switchTab('share');
+    submitModelInput.focus();
+  } else {
+    submitModelInput.value = modelLabel(modelId);
+    submitModelInput.disabled = true;
+  }
 
   loadPrompts();
 }
@@ -526,7 +569,7 @@ async function submitPrompt() {
 
     titleInput.value = '';
     bodyInput.value = '';
-    submitDetails.open = false;
+    switchTab('browse');
     showToast('Prompt submitted ✓');
 
     // Refresh summary counts + prompts + activity feed
@@ -563,6 +606,9 @@ async function handleDeepLink() {
   startActivityPoll();
 
   if (!modelParam) return;
+
+  // Deep link targets a model — show Browse tab
+  switchTab('browse');
 
   const entry = MODEL_CATALOG.find((m) => m.id === modelParam);
   if (entry) activeGroup = entry.group;
